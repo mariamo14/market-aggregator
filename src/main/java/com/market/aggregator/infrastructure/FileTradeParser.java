@@ -13,18 +13,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// This class is used to parse the trades from a file.
 @Component
 public class FileTradeParser {
-
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public List<Trade> parseTrades(InputStream inputStream) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            return reader.lines()
-                    .map(String::trim)
-                    .filter(this::isValidLine)
-                    .map(this::parseTrade)
-                    .collect(Collectors.toList());
+            return reader.lines().map(String::trim).filter(this::isValidLine).map(this::parseTrade).collect(Collectors.toList());
         }
     }
 
@@ -41,11 +37,6 @@ public class FileTradeParser {
         String ticker = parts[1].trim();
         BigDecimal price = new BigDecimal(parts[2].trim());
         int quantity = Integer.parseInt(parts[3].trim());
-        return Trade.builder()
-                .timestamp(timestamp)
-                .ticker(ticker)
-                .price(price)
-                .quantity(quantity)
-                .build();
+        return Trade.builder().timestamp(timestamp).ticker(ticker).price(price).quantity(quantity).build();
     }
 }

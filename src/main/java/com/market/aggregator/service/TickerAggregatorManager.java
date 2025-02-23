@@ -7,34 +7,31 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Primary
 public class TickerAggregatorManager implements ITickerAggregatorManager {
-
     private final Map<LocalDate, Map<String, AggregationRecord>> aggregationMap;
     private LocalDate firstAggregationDate;
     private LocalDate lastAggregationDate;
 
     public TickerAggregatorManager() {
-        this.aggregationMap = new HashMap<>();
+        this.aggregationMap = new ConcurrentHashMap<>();
         this.firstAggregationDate = null;
         this.lastAggregationDate = null;
     }
 
     @Override
     public void recordTrade(Trade trade) {
-        aggregationMap.computeIfAbsent(trade.getTimestamp().toLocalDate(), k -> new HashMap<>())
-                .computeIfAbsent(trade.getTicker(), AggregationRecord::of)
-                .recordTrade(trade);
+        aggregationMap.computeIfAbsent(trade.getTimestamp().toLocalDate(), k -> new ConcurrentHashMap<>()).computeIfAbsent(trade.getTicker(), AggregationRecord::of).recordTrade(trade);
     }
 
     @Override
     public Map<String, AggregationRecord> getAggregationFor(LocalDate date) {
-        return Collections.unmodifiableMap(aggregationMap.getOrDefault(date, new HashMap<>()));
+        return Collections.unmodifiableMap(aggregationMap.getOrDefault(date, new ConcurrentHashMap<>()));
     }
 
     @Override
@@ -59,14 +56,10 @@ public class TickerAggregatorManager implements ITickerAggregatorManager {
     }
 
     private LocalDate calculateFirstAggregationDate() {
-        return aggregationMap.keySet().stream()
-                .min(LocalDate::compareTo)
-                .orElseThrow(() -> new IllegalStateException("Aggregation window is empty"));
+        return aggregationMap.keySet().stream().min(LocalDate::compareTo).orElseThrow(() -> new IllegalStateException("Aggregation window is empty"));
     }
 
     private LocalDate calculateLastAggregationDate() {
-        return aggregationMap.keySet().stream()
-                .max(LocalDate::compareTo)
-                .orElseThrow(() -> new IllegalStateException("Aggregation window is empty"));
+        return aggregationMap.keySet().stream().max(LocalDate::compareTo).orElseThrow(() -> new IllegalStateException("Aggregation window is empty"));
     }
 }

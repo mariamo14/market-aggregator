@@ -21,8 +21,7 @@ class FileTradeParserTest {
 
     @Test
     void testParseTrades() throws IOException {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileTradeParser.parseTrades(new ByteArrayInputStream("AXAXAXAX".getBytes(StandardCharsets.UTF_8))));
+        assertThrows(IllegalArgumentException.class, () -> fileTradeParser.parseTrades(new ByteArrayInputStream("AXAXAXAX".getBytes(StandardCharsets.UTF_8))));
         assertTrue(fileTradeParser.parseTrades(new ByteArrayInputStream(new byte[]{})).isEmpty());
     }
 }

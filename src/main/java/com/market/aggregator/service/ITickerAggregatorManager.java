@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 
+// This interface is used to manage the aggregation of trades for each ticker.
 public interface ITickerAggregatorManager {
     void recordTrade(Trade trade);
 

@@ -26,6 +26,7 @@ public class MarketAggregatorApplication implements CommandLineRunner {
         SpringApplication.run(MarketAggregatorApplication.class, args);
     }
 
+    // Helper method to get resource as InputStream
     private InputStream getResourceAsStream(String resourceName) throws Exception {
         ClassPathResource resource = new ClassPathResource(resourceName);
         if (!resource.exists()) {
@@ -34,6 +35,7 @@ public class MarketAggregatorApplication implements CommandLineRunner {
         return resource.getInputStream();
     }
 
+    // Main application logic
     @Override
     public void run(String... args) throws Exception {
         log.info("Starting MarketAggregatorApplication...");

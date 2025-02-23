@@ -11,17 +11,13 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// This class is used to parse the market weights from a file.
 @Component
 @Slf4j
 public class FileMarketWeightsParser {
-
     public Map<String, BigDecimal> parseMarketWeights(InputStream inputStream) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            return reader.lines()
-                    .map(String::trim)
-                    .filter(this::isValidLine)
-                    .map(this::parseWeight)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            return reader.lines().map(String::trim).filter(this::isValidLine).map(this::parseWeight).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
     }
 

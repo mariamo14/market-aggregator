@@ -6,10 +6,10 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.Map;
 
+// This class is used to calculate the market index based on the weighted prices and market weights.
 @Component
 @Slf4j
 public class MarketIndexCalculator {
-
     public BigDecimal calculate(Map<String, BigDecimal> weightedPrices, Map<String, BigDecimal> marketWeights) {
         BigDecimal indexValue = BigDecimal.ZERO;
         for (Map.Entry<String, BigDecimal> entry : marketWeights.entrySet()) {

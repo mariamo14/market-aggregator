@@ -6,6 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+//This class is used to store the trades of a specific ticker.
 @Data
 @Builder
 public class Trade {

@@ -60,3 +60,5 @@ refer to `docs/bdd-process.md` for details on the BDD process.
   results.
 - **UI Enhancements:**  
   Further improvements are expected to expose a user-friendly interface for viewing aggregated market data.
+- **Performance Optimization:**  
+  Future iterations will focus on optimizing performance for large datasets

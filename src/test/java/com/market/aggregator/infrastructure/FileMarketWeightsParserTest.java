@@ -21,8 +21,7 @@ class FileMarketWeightsParserTest {
 
     @Test
     void testParseMarketWeights() throws IOException {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileMarketWeightsParser.parseMarketWeights(new ByteArrayInputStream("AXAXAXAX".getBytes(StandardCharsets.UTF_8))));
+        assertThrows(IllegalArgumentException.class, () -> fileMarketWeightsParser.parseMarketWeights(new ByteArrayInputStream("AXAXAXAX".getBytes(StandardCharsets.UTF_8))));
         assertTrue(fileMarketWeightsParser.parseMarketWeights(new ByteArrayInputStream(new byte[]{})).isEmpty());
     }
 }

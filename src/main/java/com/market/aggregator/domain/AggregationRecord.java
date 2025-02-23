@@ -5,6 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+//This class is used to store the aggregation of trades for a specific ticker.
 @Data
 public class AggregationRecord {
     private final String ticker;

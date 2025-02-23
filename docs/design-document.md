@@ -18,26 +18,21 @@ reusability and testability.
   trigger meaningful exceptions.
 
 - **FileTradeParser and FileMarketWeightsParser:**  
-  Support various input formats and edge cases. These components have been updated to robustly differentiate between
+  Support various input formats and edge cases. These components have been updated to differentiate between
   valid and malformed inputs.
 
 - **TickerAggregatorManager:**  
-  Maintains daily aggregation records and manages the mapping between dates and tickers. Enhancements ensure efficient
-  retrieval of both first and last aggregation dates.
+  Maintains daily aggregation records and manages the mapping between dates and tickers.
 
 ## Enhancements and Refactoring
 
 - **Core Business Logic:**  
-  Enhanced handling of trade aggregation and market index updating, ensuring that missing trade data is managed
+  Handling of trade aggregation and market index updating, ensuring that missing trade data is managed
   appropriately by using previous price values where necessary.
 
 - **Exception Handling:**  
-  Both index calculation and input parsing now include robust error detection, throwing precise exceptions when
+  Both index calculation and input parsing include robust error detection, throwing precise exceptions when
   encountering null values or malformed data.
-
-- **Logging and Debugging:**  
-  Additional logging has been integrated across the application to provide a clear view of the execution flow and
-  debugging information.
 
 - **Test Coverage:**  
   Comprehensive unit and integration tests have been added or updated to cover scenarios, including various edge

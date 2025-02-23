@@ -27,7 +27,6 @@ class TickerAggregatorManagerTest {
     @Test
     @DisplayName("Test recordTrade(Trade)")
     void testRecordTrade() {
-        // Arrange
         Trade.TradeBuilder builderResult = Trade.builder();
         Trade.TradeBuilder tickerResult = builderResult.price(new BigDecimal("2.3")).quantity(1).ticker("Ticker");
         LocalDate ofResult = LocalDate.of(1970, 1, 1);
@@ -40,6 +39,7 @@ class TickerAggregatorManagerTest {
         assertSame(ofResult, tickerAggregatorManager.getLastAggregationDate());
     }
 
+    // Test recordTrade(Trade); given builder price BigDecimal(String) with '2.3'; then calls price(BigDecimal)
     @Test
     @DisplayName("Test recordTrade(Trade); given builder price BigDecimal(String) with '2.3'; then calls price(BigDecimal)")
     void testRecordTrade_givenBuilderPriceBigDecimalWith23_thenCallsPrice() {
