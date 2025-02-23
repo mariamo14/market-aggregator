@@ -5,6 +5,7 @@ import com.market.aggregator.domain.Trade;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 
 public interface ITickerAggregatorManager {
     void recordTrade(Trade trade);
@@ -15,4 +16,5 @@ public interface ITickerAggregatorManager {
 
     LocalDate getLastAggregationDate();
 
+    Set<LocalDate> getAggregationDates();
 }

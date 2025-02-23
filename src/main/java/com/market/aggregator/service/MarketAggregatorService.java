@@ -1,18 +1,17 @@
 package com.market.aggregator.service;
 
 import com.market.aggregator.domain.AggregationRecord;
-import com.market.aggregator.domain.Trade;
 import com.market.aggregator.infrastructure.FileMarketWeightsParser;
 import com.market.aggregator.infrastructure.FileTradeParser;
+import com.market.aggregator.printer.AggregationPrinter;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class MarketAggregatorService {
@@ -21,6 +20,7 @@ public class MarketAggregatorService {
     private final FileMarketWeightsParser weightsParser;
     private final MarketIndexCalculator marketIndexCalculator;
     private final ITickerAggregatorManager tickerAggregatorManager;
+    private final AggregationPrinter printer = new AggregationPrinter();
 
     public MarketAggregatorService(FileTradeParser tradeParser,
                                    FileMarketWeightsParser weightsParser,
@@ -32,100 +32,75 @@ public class MarketAggregatorService {
         this.marketIndexCalculator = marketIndexCalculator;
     }
 
-    public void processTrades(InputStream tradesFile, InputStream weightsFile) throws IOException {
-        // Parse the trades and weights from the files.
-        List<Trade> trades = tradeParser.parseTrades(tradesFile);
-        Map<String, BigDecimal> marketWeights = weightsParser.parseMarketWeights(weightsFile);
+    public Map<String, AggregationRecord> getAggregationFor(LocalDate date) {
+        return tickerAggregatorManager.getAggregationFor(date);
+    }
 
-        // Record each trade.
+    public void processTrades(InputStream tradesFile, InputStream weightsFile) throws IOException {
+        var trades = tradeParser.parseTrades(tradesFile);
+        var marketWeights = weightsParser.parseMarketWeights(weightsFile);
+
         trades.forEach(tickerAggregatorManager::recordTrade);
 
-        // This map will maintain the cumulative state across days.
-        Map<String, AggregationRecord> currentState = new HashMap<>();
-        boolean canConstructIndex = false;
+        SortedSet<LocalDate> dates = new TreeSet<>(tickerAggregatorManager.getAggregationDates());
+        Set<String> allTickers = buildAllTickers(dates);
+        Map<String, BigDecimal> lastWeightedPrices = initializeLastWeightedPrices(marketWeights);
+
         BigDecimal lastIndexValue = null;
-
-        // Iterate through each day from the first to the last aggregation date.
-        for (LocalDate date = tickerAggregatorManager.getFirstAggregationDate();
-             !date.isAfter(tickerAggregatorManager.getLastAggregationDate());
-             date = date.plusDays(1)) {
-
-            // Get the aggregation records for the current day.
-            Map<String, AggregationRecord> dayAggregation = tickerAggregatorManager.getAggregationFor(date);
-            currentState.putAll(dayAggregation);
-
-            // Determine if we now have all the market tickers needed to calculate the index.
-            if (!canConstructIndex &&
-                    marketWeights.keySet().stream().allMatch(currentState::containsKey)) {
-                canConstructIndex = true;
-            }
-
-            System.out.println("Date: " + date);
-            // Print daily trade aggregates for each ticker in the market weights.
-            for (String ticker : marketWeights.keySet()) {
-                AggregationRecord record = currentState.get(ticker);
-                if (record != null && record.getCloseTime() != null
-                        && record.getCloseTime().toLocalDate().isEqual(date)) {
-                    System.out.printf("%s - Open: %s, Close: %s, High: %s, Low: %s, Volume: %s%n",
-                            ticker,
-                            record.getOpenPrice(), record.getClosePrice(),
-                            record.getHighestPrice(), record.getLowestPrice(),
-                            record.getVolumeOfTrades());
-                } else {
-                    // When there are no trades for the ticker on the day.
-                    System.out.printf("%s - Open: N/A, Close: N/A, High: N/A, Low: N/A, Volume: 0%n", ticker);
-                }
-            }
-
-            // Calculate and print the market index for the day.
-            if (canConstructIndex) {
-                // Calculate the index using the current state and market weights.
-                // The index calculator should use the last known price for tickers with no trades today.
-                BigDecimal indexValue = marketIndexCalculator.calculate(currentState, marketWeights, lastIndexValue, date);
-                lastIndexValue = indexValue;
-                System.out.printf("Index for %s: %s%n", date, indexValue);
-            } else {
-                // Not all weighted tickers have traded yet, so index is not available.
-                System.out.printf("Index for %s: N/A%n", date);
-            }
-            System.out.println("--------------------------------------------------");
+        for (LocalDate date : dates) {
+            lastIndexValue = processDay(date, marketWeights, lastWeightedPrices, lastIndexValue, allTickers);
         }
     }
 
-    /*private List<AggregatorRecord> aggregationRecord(Map<String, Double> marketWeights, List<Trade> trades) throws IOException {
-        // AggregationRecord Tickers
-        trades.forEach(tickerAggregatorManager::recordTrade);
+    public Set<LocalDate> getAggregationDates() {
+        return tickerAggregatorManager.getAggregationDates();
+    }
 
-        Map<String, AggregationRecord> currentState = new HashMap<>();
-        boolean canConstructIndex = false;
+    private Set<String> buildAllTickers(SortedSet<LocalDate> dates) {
+        return dates.stream()
+                .flatMap(date -> tickerAggregatorManager.getAggregationFor(date).keySet().stream())
+                .collect(Collectors.toSet());
+    }
 
-        for (LocalDate date = tickerAggregatorManager.getFirstAggregationDate();
-             !date.isAfter(tickerAggregatorManager.getLastAggregationDate());
-             date = date.plusDays(1)) {
-
-            Map<String, AggregationRecord> dayAggregation = tickerAggregatorManager.getAggregationFor(date);
-
-            currentState.putAll(dayAggregation);
-
-            if (!canConstructIndex
-                    && marketWeights.keySet().stream().allMatch(currentState::containsKey)) {
-                canConstructIndex = true;
-            }
-            // print the index;
-            // print daily trade.
-            for (Map.Entry<String, AggregationRecord> tickerAggregate : currentState.entrySet()) {
-                if (tickerAggregate.getValue().getCloseTime().toLocalDate().isEqual(date)) {
-                    // print;
-                } else {
-                    //print empty;
-                }
-            }
-
-            if (canConstructIndex) {
-                // Calcuate and print index
-            }
-
-
+    private Map<String, BigDecimal> initializeLastWeightedPrices(Map<String, BigDecimal> marketWeights) {
+        Map<String, BigDecimal> lastPrices = new HashMap<>();
+        for (String ticker : marketWeights.keySet()) {
+            lastPrices.put(ticker, null);
         }
-    }*/
+        return lastPrices;
+    }
+
+    private BigDecimal processDay(LocalDate date,
+                                  Map<String, BigDecimal> marketWeights,
+                                  Map<String, BigDecimal> lastWeightedPrices,
+                                  BigDecimal lastIndexValue,
+                                  Set<String> allTickers) {
+        var dayAggregation = tickerAggregatorManager.getAggregationFor(date);
+        printer.printDayAggregations(date, allTickers, dayAggregation);
+
+        boolean completeForIndex = true;
+        Map<String, BigDecimal> weightedPricesForToday = new HashMap<>();
+        for (String ticker : marketWeights.keySet()) {
+            AggregationRecord record = dayAggregation.get(ticker);
+            if (record != null && record.getClosePrice() != null) {
+                lastWeightedPrices.put(ticker, record.getClosePrice());
+                weightedPricesForToday.put(ticker, record.getClosePrice());
+            } else if (lastWeightedPrices.get(ticker) != null) {
+                weightedPricesForToday.put(ticker, lastWeightedPrices.get(ticker));
+            } else {
+                completeForIndex = false;
+                weightedPricesForToday.put(ticker, null);
+            }
+        }
+
+        BigDecimal indexValue;
+        if (completeForIndex) {
+            indexValue = marketIndexCalculator.calculate(weightedPricesForToday, marketWeights);
+            lastIndexValue = indexValue;
+        } else {
+            indexValue = lastIndexValue;
+        }
+        printer.printMarketIndex(date, indexValue);
+        return lastIndexValue;
+    }
 }

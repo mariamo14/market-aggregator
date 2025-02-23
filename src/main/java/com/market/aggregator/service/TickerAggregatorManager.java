@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @Primary
@@ -20,7 +21,6 @@ public class TickerAggregatorManager implements ITickerAggregatorManager {
 
     public TickerAggregatorManager() {
         this.aggregationMap = new HashMap<>();
-        // TODO maybe use Optional.
         this.firstAggregationDate = null;
         this.lastAggregationDate = null;
     }
@@ -53,14 +53,20 @@ public class TickerAggregatorManager implements ITickerAggregatorManager {
         return lastAggregationDate = calculateLastAggregationDate();
     }
 
-    // TODO optimize to only one pass for min and max.
+    @Override
+    public Set<LocalDate> getAggregationDates() {
+        return Collections.unmodifiableSet(aggregationMap.keySet());
+    }
+
     private LocalDate calculateFirstAggregationDate() {
-        return aggregationMap.keySet().stream().min(LocalDate::compareTo)
-                .orElseThrow(() -> new IllegalStateException("Trying to get First aggregation date for an empty aggregation window"));
+        return aggregationMap.keySet().stream()
+                .min(LocalDate::compareTo)
+                .orElseThrow(() -> new IllegalStateException("Aggregation window is empty"));
     }
 
     private LocalDate calculateLastAggregationDate() {
-        return aggregationMap.keySet().stream().max(LocalDate::compareTo)
-                .orElseThrow(() -> new IllegalStateException("Trying to get last aggregation date for an empty aggregation window"));
+        return aggregationMap.keySet().stream()
+                .max(LocalDate::compareTo)
+                .orElseThrow(() -> new IllegalStateException("Aggregation window is empty"));
     }
 }

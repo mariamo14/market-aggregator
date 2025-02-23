@@ -16,35 +16,36 @@ import java.util.stream.Collectors;
 @Component
 public class FileTradeParser {
 
-    // Create a formatter that matches "2025-01-20 09:00:01"
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public List<Trade> parseTrades(InputStream inputStream) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             return reader.lines()
                     .map(String::trim)
-                    // Skip empty lines, comments, and header line (which starts with "date+time")
-                    .filter(line -> !line.isEmpty()
-                            && !line.startsWith("#")
-                            && !line.toLowerCase().startsWith("date"))
-                    .map(line -> {
-                        String[] parts = line.split(";");
-                        if (parts.length < 4) {
-                            throw new IllegalArgumentException("Invalid line format: " + line);
-                        }
-                        LocalDateTime timestamp = LocalDateTime.parse(parts[0].trim(), DATE_TIME_FORMATTER);
-                        String ticker = parts[1].trim();
-                        BigDecimal price = new BigDecimal(parts[2].trim());
-                        int quantity = Integer.parseInt(parts[3].trim());
-                        // Use the builder to create a Trade instance
-                        return Trade.builder()
-                                .timestamp(timestamp)
-                                .ticker(ticker)
-                                .price(price)
-                                .quantity(quantity)
-                                .build();
-                    })
+                    .filter(this::isValidLine)
+                    .map(this::parseTrade)
                     .collect(Collectors.toList());
         }
+    }
+
+    private boolean isValidLine(String line) {
+        return !line.isEmpty() && !line.startsWith("#") && !line.toLowerCase().startsWith("date");
+    }
+
+    private Trade parseTrade(String line) {
+        String[] parts = line.split(";");
+        if (parts.length < 4) {
+            throw new IllegalArgumentException("Invalid line format: " + line);
+        }
+        LocalDateTime timestamp = LocalDateTime.parse(parts[0].trim(), DATE_TIME_FORMATTER);
+        String ticker = parts[1].trim();
+        BigDecimal price = new BigDecimal(parts[2].trim());
+        int quantity = Integer.parseInt(parts[3].trim());
+        return Trade.builder()
+                .timestamp(timestamp)
+                .ticker(ticker)
+                .price(price)
+                .quantity(quantity)
+                .build();
     }
 }
