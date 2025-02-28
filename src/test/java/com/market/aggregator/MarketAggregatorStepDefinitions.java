@@ -70,6 +70,7 @@ public class MarketAggregatorStepDefinitions {
                 BigDecimal expectedHigh = new BigDecimal(expectedRow.get("high"));
                 BigDecimal expectedLow = new BigDecimal(expectedRow.get("low"));
                 BigDecimal expectedVolume = new BigDecimal(expectedRow.get("volume"));
+                System.out.printf("Ticker: %s, Expected Close: %s, Actual Close: %s%n", ticker, expectedClose, record.getClosePrice());
                 assertEquals(0, expectedOpen.compareTo(record.getOpenPrice()), "Open price mismatch for ticker: " + ticker);
                 assertEquals(0, expectedClose.compareTo(record.getClosePrice()), "Close price mismatch for ticker: " + ticker);
                 assertEquals(0, expectedHigh.compareTo(record.getHighestPrice()), "High price mismatch for ticker: " + ticker);
