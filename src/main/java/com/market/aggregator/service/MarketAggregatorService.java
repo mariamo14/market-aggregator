@@ -1,4 +1,3 @@
-// Java
 package com.market.aggregator.service;
 
 import com.market.aggregator.domain.AggregationRecord;
@@ -15,6 +14,11 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
+// FUTURE IMPROVEMENT:
+// To enhance performance, we can consider reading and processing the data in batches instead of processing
+// each trade individually. This would reduce the number of I/O calls and lower the overhead of submitting
+// individual tasks. Currently, this is not implemented.
 
 //This class is responsible for processing trades and calculating market indices.
 @Service
