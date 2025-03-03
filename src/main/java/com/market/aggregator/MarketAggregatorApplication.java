@@ -40,20 +40,27 @@ public class MarketAggregatorApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("Starting MarketAggregatorApplication...");
 
-        InputStream logStream;
-        if (args.length >= 1 && Files.exists(Path.of(args[0]))) {
-            log.info("Using external file: {}", args[0]);
-            logStream = new FileInputStream(args[0]);
+        if (args.length >= 3 && args[0].equals("--batch")) {
+            // Batch processing mode
+            log.info("Running in batch processing mode");
+            aggregatorService.processTradesInBatches(args[1], args[2]);
         } else {
-            log.info("No valid external file provided. Using default file from classpath.");
-            logStream = getResourceAsStream("market_log.txt");
-        }
+            // Original single-threaded mode
+            InputStream logStream;
+            if (args.length >= 1 && Files.exists(Path.of(args[0]))) {
+                log.info("Using external file: {}", args[0]);
+                logStream = new FileInputStream(args[0]);
+            } else {
+                log.info("No valid external file provided. Using default file from classpath.");
+                logStream = getResourceAsStream("market_log.txt");
+            }
 
-        try (InputStream ls = logStream;
-             InputStream weightsStream = getResourceAsStream("market_weights.txt")) {
-            log.info("Processing trades...");
-            aggregatorService.processTrades(ls, weightsStream);
-            log.info("Processing completed.");
+            try (InputStream ls = logStream;
+                 InputStream weightsStream = getResourceAsStream("market_weights.txt")) {
+                log.info("Processing trades...");
+                aggregatorService.processTrades(ls, weightsStream);
+                log.info("Processing completed.");
+            }
         }
     }
 }

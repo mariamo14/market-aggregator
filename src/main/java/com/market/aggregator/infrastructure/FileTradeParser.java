@@ -33,10 +33,6 @@ public class FileTradeParser {
         if (parts.length < 4) {
             throw new IllegalArgumentException("Invalid line format: " + line);
         }
-        LocalDateTime timestamp = LocalDateTime.parse(parts[0].trim(), DATE_TIME_FORMATTER);
-        String ticker = parts[1].trim();
-        BigDecimal price = new BigDecimal(parts[2].trim());
-        int quantity = Integer.parseInt(parts[3].trim());
-        return Trade.builder().timestamp(timestamp).ticker(ticker).price(price).quantity(quantity).build();
+        return TradeParserUtil.getTrade(parts, DATE_TIME_FORMATTER);
     }
 }

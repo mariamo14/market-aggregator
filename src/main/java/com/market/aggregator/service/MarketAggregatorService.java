@@ -4,15 +4,28 @@ import com.market.aggregator.domain.AggregationRecord;
 import com.market.aggregator.domain.Trade;
 import com.market.aggregator.infrastructure.FileMarketWeightsParser;
 import com.market.aggregator.infrastructure.FileTradeParser;
+import com.market.aggregator.infrastructure.mapreduce.BatchJobRunner;
+import com.market.aggregator.infrastructure.mapreduce.BatchLineInputFormat;
+import com.market.aggregator.infrastructure.mapreduce.BatchMapper;
+import com.market.aggregator.infrastructure.mapreduce.BatchReducer;
 import com.market.aggregator.printer.AggregationPrinter;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 // FUTURE IMPROVEMENT:
@@ -75,6 +88,65 @@ public class MarketAggregatorService {
         for (LocalDate date : dates) {
             lastIndexValue = processDay(date, marketWeights, lastWeightedPrices, lastIndexValue, allTickers);
         }
+    }
+
+    // Processes trades in batches using MapReduce
+    public void processTradesInBatches(String inputPath, String outputPath) throws Exception {
+        Configuration conf = new Configuration();
+        conf.set("batch.record.lines", "5");
+        Job job = Job.getInstance(conf, "Market Aggregator Batch Processing");
+        job.setJarByClass(getClass());
+
+        FileInputFormat.addInputPath(job, new Path(inputPath));
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+        job.setMapperClass(BatchMapper.class);
+        job.setReducerClass(BatchReducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
+
+        if (job.waitForCompletion(true)) {
+            processOutput(new Path(outputPath));
+        } else {
+            throw new IOException("MapReduce job failed");
+        }
+    }
+
+    // Processes the output of the MapReduce job
+    private void processOutput(Path outputPath) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(outputPath.toString()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                processDailyAggregation(
+                        LocalDate.parse(line.substring(0, line.indexOf(";"))),
+                        line.substring(line.indexOf(";") + 1)
+                );
+            }
+        }
+    }
+
+    private void processDailyAggregation(LocalDate date, String aggregation) {
+        String[] parts = aggregation.split(";");
+        if (parts.length == 6) {
+            AggregationRecord record = AggregationRecord.of(parts[0]);
+            record.setOpenPrice(new BigDecimal(parts[1]));
+            record.setClosePrice(new BigDecimal(parts[2]));
+            record.setHighestPrice(new BigDecimal(parts[3]));
+            record.setLowestPrice(new BigDecimal(parts[4]));
+            record.setVolumeOfTrades(new BigDecimal(parts[5]));
+            record.setOpenTime(date.atStartOfDay());
+            record.setCloseTime(date.atTime(23, 59, 59));
+            tickerAggregatorManager.recordTrade(buildTradeFromRecord(date, record));
+        }
+    }
+
+    private Trade buildTradeFromRecord(LocalDate date, AggregationRecord record) {
+        return Trade.builder()
+                .ticker(record.getTicker())
+                .price(record.getClosePrice())
+                .quantity(record.getVolumeOfTrades().intValue())
+                .timestamp(date.atTime(12, 0))
+                .build();
     }
 
     public Set<LocalDate> getAggregationDates() {
