@@ -21,7 +21,6 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Boot Dependencies (Move these from dependencyManagement) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -63,6 +62,7 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

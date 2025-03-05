@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class Trade {
+    // The fields of the Trade class match the parsed data from the historical log.
     private final LocalDateTime timestamp;
     private final String ticker;
     private final BigDecimal price;

@@ -39,7 +39,6 @@ class TickerAggregatorManagerTest {
         assertSame(ofResult, tickerAggregatorManager.getLastAggregationDate());
     }
 
-    // Test recordTrade(Trade); given builder price BigDecimal(String) with '2.3'; then calls price(BigDecimal)
     @Test
     @DisplayName("Test recordTrade(Trade); given builder price BigDecimal(String) with '2.3'; then calls price(BigDecimal)")
     void testRecordTrade_givenBuilderPriceBigDecimalWith23_thenCallsPrice() {

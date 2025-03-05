@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// This class is used to parse the market weights from a file.
+// This class is used to parse the market weights from the market weights file.
 @Component
 @Slf4j
 public class FileMarketWeightsParser {
@@ -25,7 +25,9 @@ public class FileMarketWeightsParser {
         return !line.isEmpty() && !line.startsWith("#");
     }
 
+    //The sum of the all index weights should be 1, we can add a check to validate this
     private Map.Entry<String, BigDecimal> parseWeight(String line) {
+        //Parse the line into ticker and weight
         String[] parts = line.split(":");
         if (parts.length < 2) {
             throw new IllegalArgumentException("Invalid line format: " + line);
